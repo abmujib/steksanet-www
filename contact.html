@@ -235,29 +235,62 @@
          </div>
       </div>      
       <!-- breadcrumb-area-end -->
-
-      <!-- maintenance-area-start -->
-      <div class="tv-error-area pt-130 pb-125">
+      
+      <!-- contact-area-start -->
+       <div class="tv-contact-area pt-130 pb-130">
          <div class="container">
-            <div class="row justify-content-center">
-               <div class="col-12">
-                  <div class="tv-error-content text-center">
-                     <h5 class="tv-section-title pb-40 tv-spltv-text tv-spltv-in-right">We're Sorry this page is currently under maintenance</h5>
-                     <div class="tv-fade-anim" data-fade-from="top" data-ease="bounce" data-delay=".5">
-                        <a href="index.html"  class="tv-btn-primary p-relative">
-                           <span class="btn-wrap">
-                              <span class="btn-text1">Back to Home</span>
-                              <span class="btn-text2">Back to Home </span>
-                           </span>
-                        </a> 
+            <div class="tv-contact-wrap">
+               <div class="row gy-4 align-items-center">
+                  <div class="col-lg-12 wow itfadeUp" data-wow-delay=".2s">
+                     <div class="tv-contact-right-wrap">
+                        <h1 class="text-white">Hubungi Kami</h1>
+                        <p>Jangan ragu untuk menghubungi kami.</p>
+                        <form id="contactForm">
+                           <!-- API KEY -->
+                           <input type="hidden" name="accessKey" value="sf_likg0h10nbn33766naif3hfb">
+                           <input type="hidden" name="subject" value="Contact Web STEKSA.NET">
+
+                           <div class="tv-contact-input-box mb-24">
+                              <input type="text" name="name" placeholder="Nama" required>
+                           </div>
+
+                           <div class="tv-contact-input-box mb-24">
+                              <input type="number" name="phone" placeholder="WhatsApp" required">
+                           </div>
+
+                           <div class="tv-contact-input-box mb-24">
+                              <input type="text" name="alamat" placeholder="Alamat">
+                           </div>
+
+                           <div class="it-contact-textarea-box mb-24">
+                              <textarea name="message" placeholder="Pesan" required rows="3"></textarea>
+                           </div>                           
+                           <button type="submit" class="tv-btn-primary">
+                              <span class="btn-wrap">
+                                 <span class="btn-text1">Kirim Pesan</span>
+                                 <span class="btn-text2">Kirim Pesan</span>
+                              </span>
+                           </button>
+                        </form>
                      </div>
                   </div>
                </div>
             </div>
          </div>
+       </div>
+      <!-- contact-area-end -->      
+
+      <!-- maps-area-start -->
+      <div class="tv-google-map wow itfadeUp" data-wow-delay=".2s">
+         <iframe class="tv-map" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3762.495897964658!2d106.8000138!3d-7.2006373!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e6817003cabab39%3A0x5d51d626f53995f0!2sSTEKSA%20NETWORK!5e1!3m2!1sid!2sid!4v1769682687660!5m2!1sid!2sid" 
+            style="border:0;" 
+            allowfullscreen="" 
+            loading="lazy" 
+            referrerpolicy="no-referrer-when-downgrade">
+         </iframe>
       </div>
-      <!-- maintenance-area-end -->
-      
+      <!-- maps-area-end -->
+
    </main>
 
 
@@ -277,7 +310,7 @@
                      <div class="col-xxl-6 col-xl-6 col-lg-6 col-md-6 wow itfadeUp" data-wow-delay=".2s">
                         <div class="tv-footer-top-right widget">
                            <p>Internet berbasis fiber optik (FTTH) dan wireless yang stabil dan nyaman, mendukung berbagai aktivitas rumah tangga dengan koneksi andal dan layanan pelanggan yang responsif.</p>
-                           <a href="contact.html "  class="tv-btn-primary mt-74 p-relative">
+                           <a href="contact.html"  class="tv-btn-primary mt-74 p-relative">
                               <span class="btn-wrap">
                                  <span class="btn-text1">Hubungi Kami</span>
                                  <span class="btn-text2">Hubungi Kami</span>
@@ -334,7 +367,9 @@
    <script src="assets/js/custom-gsap.js"></script>
    <script src="assets/js/slider.js"></script>
    <script src="assets/js/main.js"></script>
-
+   <!-- Custom JS -->
+   <script src="assets/js/contact-submit.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </body>
 
