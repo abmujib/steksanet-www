@@ -4,11 +4,9 @@ document.getElementById("contactForm").addEventListener("submit", async function
   const form = this;
   const formData = new FormData(form);
 
-  // 🔥 DISABLE BUTTON DI SINI
   const btn = form.querySelector("button");
-  btn.disabled = true;  
+  btn.disabled = true;
 
-  // Loading popup
   Swal.fire({
     title: 'Mengirim Pesan...',
     text: 'Mohon tunggu sebentar',
@@ -25,28 +23,40 @@ document.getElementById("contactForm").addEventListener("submit", async function
     });
 
     if (response.ok) {
+
       Swal.fire({
         icon: 'success',
         title: 'Berhasil!',
-        text: 'Pesan berhasil dikirim.',
-        confirmButtonColor: '#facc15'
+        text: 'Pesan berhasil dikirim',
+        confirmButtonText: 'OK'
+      }).then(() => {
+
+        window.location.href = "https://steksa.net/contact.html";
+
       });
 
       form.reset();
 
     } else {
+
       Swal.fire({
         icon: 'error',
         title: 'Gagal',
         text: 'Pesan gagal dikirim'
       });
+
     }
 
   } catch (error) {
+
     Swal.fire({
       icon: 'error',
       title: 'Error',
       text: 'Tidak bisa terhubung ke server'
     });
+
   }
+
+  btn.disabled = false;
+
 });
