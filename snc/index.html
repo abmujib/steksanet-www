@@ -8,6 +8,7 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
@@ -46,43 +47,84 @@
 
 <body>
 
+    <!-- ================= NAVBAR WITH PROFILE ================= -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm d-none" id="mainNavbar">
+        <div class="container">
+
+            <a class="navbar-brand fw-bold" href="#">
+                <i class="fa-solid fa-network-wired me-2"></i>SNC
+            </a>
+
+            <div class="ms-auto dropdown">
+
+                <a class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fa-solid fa-user-circle fs-5 me-2"></i>
+                    <strong id="loginName">Admin</strong>
+                </a>
+
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3" aria-labelledby="profileDropdown">
+                    <li class="px-3 py-2 text-muted small">
+                        <i class="fa-solid fa-user me-1"></i>
+                        Login sebagai
+                    </li>
+                    <li>
+                        <span class="dropdown-item-text fw-semibold" id="loginNameDropdown">
+                            Admin
+                        </span>
+                    </li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    <li>
+                        <button onclick="logout()" class="dropdown-item text-danger">
+                            <i class="fa-solid fa-right-from-bracket me-2"></i>
+                            Logout
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
     <div class="container py-5">
         <div class="row justify-content-center">
             <div class="col-12 col-sm-10 col-md-8 col-lg-6">
 
-                <!-- LOGIN -->
+                <!-- ================= LOGIN FORM ================= -->
                 <div class="card shadow border-0" id="loginCard">
                     <div class="card-body p-4">
 
-                        <h4 class="text-center mb-4 fw-bold">Login Teknisi</h4>
+                        <h4 class="text-center fw-bold mt-4 mb-2 text-uppercase">SNC LOGIN</h4>
+                        <p class="text-center mb-5">Please log in using your username and password!</p>
 
                         <form id="loginForm">
                             <div class="mb-3">
                                 <label class="form-label">Username</label>
-                                <input type="text" class="form-control" name="username" required>
+                                <input type="text" class="form-control" name="username" placeholder="Your Username" required>
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label">Password</label>
-                                <input type="password" class="form-control" name="password" required>
+                                <input type="password" class="form-control" name="password" placeholder="Your Password" required>
                             </div>
+
+                            <p class="small mb-3 text-center text-muted">Lupa akun? Hubungi Admin.</p>
 
                             <button type="submit" id="loginBtn" class="btn btn-primary w-100">
                                 Login
                             </button>
                         </form>
 
+                        <p class="text-center mt-5">&copy; 2026 <strong>STEKSA.NET</strong></p>
+
                     </div>
                 </div>
 
-                <!-- FORM -->
+                <!-- ================= CUSTOMER FORM ================= -->
                 <div class="card shadow border-0 d-none" id="formCard">
                     <div class="card-body p-4">
 
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h4 class="fw-bold m-0">Form Input Data Pelanggan</h4>
-                            <button onclick="logout()" class="btn btn-sm btn-danger">Logout</button>
-                        </div>
+                        <h4 class="fw-bold mb-4 text-center">Form Input Data Pelanggan</h4>
 
                         <form id="dataForm">
 
@@ -93,12 +135,14 @@
 
                             <div class="mb-3">
                                 <label class="form-label">Nomor WhatsApp</label>
-                                <input type="text" class="form-control" name="whatsapp" placeholder="62xxx" required>
+                                <input type="number" class="form-control" name="whatsapp" placeholder="62xxx" required>
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label">Area</label>
-                                <select class="form-select select2Area" name="area" required></select>
+                                <select class="form-select select2Area" name="area" required>
+                                    <option></option>
+                                </select>
                             </div>
 
                             <div class="mb-3">
@@ -134,6 +178,7 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
         const scriptURL = "https://script.google.com/macros/s/AKfycbzAdKHmfWDtiOF0EqwuN-FOXKRI30B49doEr9-tqe4Gqsz6Bu6tz4B6eklY3Xi4R9hIeQ/exec";
@@ -141,29 +186,24 @@
 
         $(document).ready(function() {
 
-            if (token) {
-                showForm();
-            }
+            if (token) showForm();
 
             $.getJSON('area.json', function(data) {
                 $('.select2Area').select2({
                     placeholder: "Pilih Area",
                     allowClear: true,
-                    data: data.results,
-                    width: '100%'
-                }).val(null).trigger('change');
+                    data: data.results
+                });
             });
 
             $('.select2Desa').select2({
                 placeholder: "Pilih Desa",
-                allowClear: true,
-                width: '100%'
-            }).val(null).trigger('change');
+                allowClear: true
+            });
 
         });
 
         /* ================= LOGIN ================= */
-
         document.getElementById("loginForm").addEventListener("submit", function(e) {
             e.preventDefault();
 
@@ -172,8 +212,9 @@
             btn.innerText = "Memproses...";
 
             Swal.fire({
-                title: "Login...",
-                text: "Memverifikasi akun",
+                icon: "info",
+                title: "Memverifikasi Akun",
+                text: "Silakan tunggu..",
                 allowOutsideClick: false,
                 allowEscapeKey: false,
                 didOpen: () => Swal.showLoading()
@@ -194,6 +235,7 @@
 
                     if (response.status === "success") {
                         localStorage.setItem("token", response.token);
+                        localStorage.setItem("username", formData.get("username"));
                         token = response.token;
                         Swal.close();
                         showForm();
@@ -210,7 +252,6 @@
         });
 
         /* ================= SUBMIT DATA ================= */
-
         document.getElementById("dataForm").addEventListener("submit", function(e) {
             e.preventDefault();
 
@@ -230,11 +271,12 @@
             }
 
             btn.disabled = true;
-            btn.innerText = "Mengirim...";
+            btn.innerText = "Mengirim";
 
             Swal.fire({
-                title: "Memproses Data...",
-                html: "Upload KTP & Membuat PPPoE<br><br><b>Mohon tunggu</b>",
+                icon: "info",
+                title: "Memproses Data",
+                html: "Silakan tunggu..",
                 allowOutsideClick: false,
                 allowEscapeKey: false,
                 didOpen: () => Swal.showLoading()
@@ -280,34 +322,72 @@ margin-bottom:15px;">
 ${response.secret}
 </div>
 
-<button id="copySecretBtn" style="
+<button id="copySecretBtn" type="button" style="
 background:#0d6efd;
 color:white;
 border:none;
-padding:8px 15px;
+padding:10px 18px;
 border-radius:6px;
 cursor:pointer;">
 Salin Secret
 </button>
-`,
-                                confirmButtonColor: "#198754",
+        `,
+                                showConfirmButton: false,
+                                showCloseButton: true,
+                                allowOutsideClick: false,
+                                allowEscapeKey: false,
+
                                 didOpen: () => {
 
                                     const copyBtn = document.getElementById("copySecretBtn");
-                                    const secretText = document.getElementById("secretBox").innerText;
 
                                     copyBtn.addEventListener("click", function() {
-                                        navigator.clipboard.writeText(secretText).then(() => {
-                                            copyBtn.innerText = "Berhasil Disalin!";
-                                            copyBtn.style.background = "#198754";
-                                        });
+
+                                        const secretText = document.getElementById("secretBox").innerText;
+
+                                        // Jika browser support navigator.clipboard
+                                        if (navigator.clipboard && window.isSecureContext) {
+
+                                            navigator.clipboard.writeText(secretText)
+                                                .then(() => successCopy(copyBtn))
+                                                .catch(() => fallbackCopy(secretText, copyBtn));
+
+                                        } else {
+                                            fallbackCopy(secretText, copyBtn);
+                                        }
+
                                     });
 
-                                }
-                            });
+                                    function fallbackCopy(text, btn) {
+                                        const textArea = document.createElement("textarea");
+                                        textArea.value = text;
+                                        textArea.style.position = "fixed";
+                                        textArea.style.opacity = "0";
+                                        document.body.appendChild(textArea);
+                                        textArea.focus();
+                                        textArea.select();
 
-                            form.reset();
-                            $('.select2Area').val(null).trigger('change');
+                                        try {
+                                            document.execCommand("copy");
+                                            successCopy(btn);
+                                        } catch (err) {
+                                            btn.innerText = "Gagal Copy";
+                                        }
+
+                                        document.body.removeChild(textArea);
+                                    }
+
+                                    function successCopy(btn) {
+                                        btn.innerText = "Berhasil Disalin!";
+                                        btn.style.background = "#198754";
+                                    }
+
+                                }
+
+                            }).then(() => {
+                                form.reset();
+                                $('.select2Area').val(null).trigger('change');
+                            });
 
                         } else {
                             Swal.fire("Gagal!", response.message, "error");
@@ -326,15 +406,22 @@ Salin Secret
 
         });
 
-        /* ================= UTIL ================= */
-
+        /* ================= SHOW FORM ================= */
         function showForm() {
             document.getElementById("loginCard").classList.add("d-none");
             document.getElementById("formCard").classList.remove("d-none");
+            document.getElementById("mainNavbar").classList.remove("d-none");
+
+            const username = localStorage.getItem("username") || "Admin";
+
+            document.getElementById("loginName").innerText = username;
+            document.getElementById("loginNameDropdown").innerText = username;
         }
 
+        /* ================= LOGOUT ================= */
         function logout() {
             localStorage.removeItem("token");
+            localStorage.removeItem("username");
             location.reload();
         }
     </script>
