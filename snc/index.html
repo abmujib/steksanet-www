@@ -105,7 +105,16 @@
 
                             <div class="mb-3">
                                 <label class="form-label">Password</label>
-                                <input type="password" class="form-control" name="password" placeholder="Your Password" required>
+                                <div class="position-relative">
+                                    <input type="password" class="form-control pe-5" name="password" id="passwordInput" placeholder="Your Password" required>
+                                    <i class="fa-solid fa-eye position-absolute" id="togglePassword" style="
+                                    right:15px;
+                                    top:50%;
+                                    transform:translateY(-50%);
+                                    cursor:pointer;
+                                    color:#6c757d;">
+                                    </i>
+                                </div>
                             </div>
 
                             <p class="small mb-3 text-center text-muted">Lupa akun? Hubungi Admin.</p>
@@ -424,6 +433,21 @@ Salin Secret
             localStorage.removeItem("username");
             location.reload();
         }
+
+        /* ================= TOGGLE PASSWORD ================= */
+        document.getElementById("togglePassword").addEventListener("click", function() {
+            const passwordInput = document.getElementById("passwordInput");
+            const icon = this;
+            if (passwordInput.type === "password") {
+                passwordInput.type = "text";
+                icon.classList.remove("fa-eye");
+                icon.classList.add("fa-eye-slash");
+            } else {
+                passwordInput.type = "password";
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
+            }
+        });
     </script>
 
 </body>
