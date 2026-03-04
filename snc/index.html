@@ -212,6 +212,7 @@
 
         });
 
+
         /* ================= LOGIN ================= */
         document.getElementById("loginForm").addEventListener("submit", function(e) {
             e.preventDefault();
@@ -260,6 +261,7 @@
                 });
         });
 
+
         /* ================= SUBMIT DATA ================= */
         document.getElementById("dataForm").addEventListener("submit", function(e) {
             e.preventDefault();
@@ -268,19 +270,32 @@
             const btn = document.getElementById("submitBtn");
             const file = document.getElementById("ktp").files[0];
 
+            // --- VALIDASI WHATSAPP ---
+            let wa = form.whatsapp.value.trim();
+
+            const waPattern = /^62\d{8,13}$/;
+
+            if (!waPattern.test(wa)) {
+                Swal.fire({
+                    icon: "warning",
+                    title: "Nomor WA Tidak Valid!",
+                    html: `Pastikan nomor WhatsApp:<br>
+                   • Diawali dengan <b>62</b> (bukan 08 atau +62)<br>
+                   • Hanya berisi angka<br>
+                   • Terdiri dari 10 - 15 digit`,
+                    confirmButtonColor: "#0d6efd"
+                });
+                return;
+            }
+            // --- END VALIDASI WHATSAPP ---
+
             if (!file) {
                 Swal.fire("Error!", "Foto KTP wajib diupload!", "error");
                 return;
             }
 
-            let wa = form.whatsapp.value.trim();
-            if (!wa.startsWith("62")) {
-                Swal.fire("Format Salah!", "Nomor WhatsApp harus diawali 62", "warning");
-                return;
-            }
-
             btn.disabled = true;
-            btn.innerText = "Mengirim";
+            btn.innerText = "Mengirim...";
 
             Swal.fire({
                 icon: "info",
@@ -293,127 +308,157 @@
 
             const reader = new FileReader();
 
-            reader.onloadend = function() {
+            // Mulai proses Watermark setelah file dibaca
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    // Buat elemen Canvas
+                    const canvas = document.createElement("canvas");
+                    const ctx = canvas.getContext("2d");
 
-                const formData = new FormData(form);
-                formData.set("whatsapp", wa);
-                formData.set("ktp", reader.result);
-                formData.append("token", token);
+                    // Sesuaikan ukuran canvas dengan gambar asli
+                    canvas.width = img.width;
+                    canvas.height = img.height;
 
-                fetch(scriptURL, {
-                        method: "POST",
-                        body: formData
-                    })
-                    .then(res => res.json())
-                    .then(response => {
+                    // Gambar foto asli ke canvas
+                    ctx.drawImage(img, 0, 0);
 
-                        btn.disabled = false;
-                        btn.innerText = "Kirim Data";
+                    // --- PENGATURAN WATERMARK ---
+                    const text = "STEKSA.NET";
 
-                        if (response.status === "success") {
+                    const fontSize = Math.max(canvas.width, canvas.height) * 0.02;
+                    ctx.font = `${fontSize}px Arial`;
 
-                            Swal.fire({
-                                icon: "success",
-                                title: "Berhasil!",
-                                html: `
-<b>Secret PPPoE:</b><br><br>
+                    ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
 
-<div id="secretBox" style="
-background:#eef4ff;
-border:2px dashed #0d6efd;
-padding:12px;
-border-radius:10px;
-font-weight:bold;
-color:#0d6efd;
-word-break:break-all;
-text-align:center;
-margin-bottom:15px;">
-${response.secret}
-</div>
+                    const diag = Math.sqrt(canvas.width * canvas.width + canvas.height * canvas.height);
 
-<button id="copySecretBtn" type="button" style="
-background:#0d6efd;
-color:white;
-border:none;
-padding:10px 18px;
-border-radius:6px;
-cursor:pointer;">
-Salin Secret
-</button>
-        `,
-                                showConfirmButton: false,
-                                showCloseButton: true,
-                                allowOutsideClick: false,
-                                allowEscapeKey: false,
+                    const stepX = ctx.measureText(text).width * 2.5;
+                    const stepY = fontSize * 6;
 
-                                didOpen: () => {
+                    ctx.translate(canvas.width / 2, canvas.height / 2);
+                    ctx.rotate(-45 * Math.PI / 180);
 
-                                    const copyBtn = document.getElementById("copySecretBtn");
+                    const startPos = -diag;
+                    const endPos = diag;
 
-                                    copyBtn.addEventListener("click", function() {
-
-                                        const secretText = document.getElementById("secretBox").innerText;
-
-                                        // Jika browser support navigator.clipboard
-                                        if (navigator.clipboard && window.isSecureContext) {
-
-                                            navigator.clipboard.writeText(secretText)
-                                                .then(() => successCopy(copyBtn))
-                                                .catch(() => fallbackCopy(secretText, copyBtn));
-
-                                        } else {
-                                            fallbackCopy(secretText, copyBtn);
-                                        }
-
-                                    });
-
-                                    function fallbackCopy(text, btn) {
-                                        const textArea = document.createElement("textarea");
-                                        textArea.value = text;
-                                        textArea.style.position = "fixed";
-                                        textArea.style.opacity = "0";
-                                        document.body.appendChild(textArea);
-                                        textArea.focus();
-                                        textArea.select();
-
-                                        try {
-                                            document.execCommand("copy");
-                                            successCopy(btn);
-                                        } catch (err) {
-                                            btn.innerText = "Gagal Copy";
-                                        }
-
-                                        document.body.removeChild(textArea);
-                                    }
-
-                                    function successCopy(btn) {
-                                        btn.innerText = "Berhasil Disalin!";
-                                        btn.style.background = "#198754";
-                                    }
-
-                                }
-
-                            }).then(() => {
-                                form.reset();
-                                $('.select2Area').val(null).trigger('change');
-                            });
-
-                        } else {
-                            Swal.fire("Gagal!", response.message, "error");
+                    for (let y = startPos; y < endPos; y += stepY) {
+                        for (let x = startPos; x < endPos; x += stepX) {
+                            ctx.fillText(text, x, y);
                         }
+                    }
+                    // --- SELESAI PENGATURAN WATERMARK ---
 
-                    })
-                    .catch(() => {
-                        btn.disabled = false;
-                        btn.innerText = "Kirim Data";
-                        Swal.fire("Gagal!", "Terjadi kesalahan saat mengirim data", "error");
-                    });
+                    // Convert hasil canvas kembali ke Base64 (Format JPEG kualitas 80% untuk kompresi)
+                    const watermarkedBase64 = canvas.toDataURL("image/jpeg", 0.8);
 
+                    // Siapkan data untuk dikirim
+                    const formData = new FormData(form);
+                    formData.set("whatsapp", wa);
+                    formData.set("ktp", watermarkedBase64);
+                    formData.append("token", token);
+
+                    // Kirim ke Google Apps Script
+                    fetch(scriptURL, {
+                            method: "POST",
+                            body: formData
+                        })
+                        .then(res => res.json())
+                        .then(response => {
+                            btn.disabled = false;
+                            btn.innerText = "Kirim Data";
+
+                            if (response.status === "success") {
+                                Swal.fire({
+                                    icon: "success",
+                                    title: "Berhasil!",
+                                    html: `
+                                <b>Secret PPPoE:</b><br><br>
+                                <div id="secretBox" style="
+                                    background:#eef4ff;
+                                    border:2px dashed #0d6efd;
+                                    padding:12px;
+                                    border-radius:10px;
+                                    font-weight:bold;
+                                    color:#0d6efd;
+                                    word-break:break-all;
+                                    text-align:center;
+                                    margin-bottom:15px;">
+                                    ${response.secret}
+                                </div>
+                                <button id="copySecretBtn" type="button" style="
+                                    background:#0d6efd;
+                                    color:white;
+                                    border:none;
+                                    padding:10px 18px;
+                                    border-radius:6px;
+                                    cursor:pointer;">
+                                    Salin Secret
+                                </button>
+                                `,
+                                    showConfirmButton: false,
+                                    showCloseButton: true,
+                                    allowOutsideClick: false,
+                                    allowEscapeKey: false,
+                                    didOpen: () => {
+                                        const copyBtn = document.getElementById("copySecretBtn");
+                                        copyBtn.addEventListener("click", function() {
+                                            const secretText = document.getElementById("secretBox").innerText;
+                                            if (navigator.clipboard && window.isSecureContext) {
+                                                navigator.clipboard.writeText(secretText)
+                                                    .then(() => successCopy(copyBtn))
+                                                    .catch(() => fallbackCopy(secretText, copyBtn));
+                                            } else {
+                                                fallbackCopy(secretText, copyBtn);
+                                            }
+                                        });
+
+                                        function fallbackCopy(text, btn) {
+                                            const textArea = document.createElement("textarea");
+                                            textArea.value = text;
+                                            textArea.style.position = "fixed";
+                                            textArea.style.opacity = "0";
+                                            document.body.appendChild(textArea);
+                                            textArea.focus();
+                                            textArea.select();
+                                            try {
+                                                document.execCommand("copy");
+                                                successCopy(btn);
+                                            } catch (err) {
+                                                btn.innerText = "Gagal Copy";
+                                            }
+                                            document.body.removeChild(textArea);
+                                        }
+
+                                        function successCopy(btn) {
+                                            btn.innerText = "Berhasil Disalin!";
+                                            btn.style.background = "#198754";
+                                        }
+                                    }
+                                }).then(() => {
+                                    form.reset();
+                                    $('.select2Area').val(null).trigger('change');
+                                });
+                            } else {
+                                Swal.fire("Gagal!", response.message, "error");
+                            }
+                        })
+                        .catch(() => {
+                            btn.disabled = false;
+                            btn.innerText = "Kirim Data";
+                            Swal.fire("Gagal!", "Terjadi kesalahan saat mengirim data", "error");
+                        });
+
+                };
+                img.src = event.target.result;
             };
 
+            // Baca file sebagai Data URL (Base64) untuk memicu proses di atas
             reader.readAsDataURL(file);
-
         });
+
 
         /* ================= SHOW FORM ================= */
         function showForm() {
@@ -427,12 +472,515 @@ Salin Secret
             document.getElementById("loginNameDropdown").innerText = username;
         }
 
+
         /* ================= LOGOUT ================= */
         function logout() {
             localStorage.removeItem("token");
             localStorage.removeItem("username");
             location.reload();
         }
+
+
+        /* ================= TOGGLE PASSWORD ================= */
+        document.getElementById("togglePassword").addEventListener("click", function() {
+            const passwordInput = document.getElementById("passwordInput");
+            const icon = this;
+            if (passwordInput.type === "password") {
+                passwordInput.type = "text";
+                icon.classList.remove("fa-eye");
+                icon.classList.add("fa-eye-slash");
+            } else {
+                passwordInput.type = "password";
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
+            }
+        });
+    </script>
+
+</body>
+
+</html><!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SNC</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        body {
+            background: #f8f9fa;
+        }
+
+        .card {
+            border-radius: 18px;
+        }
+
+        .form-control,
+        .form-select {
+            height: 48px;
+            border-radius: 12px;
+        }
+
+        .btn-primary {
+            height: 50px;
+            border-radius: 14px;
+            font-weight: 600;
+        }
+
+        .select2-container .select2-selection--single {
+            height: 48px !important;
+            padding: 10px 12px;
+            border: 1px solid #ced4da !important;
+            border-radius: 12px !important;
+        }
+
+        .select2-container {
+            width: 100% !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ================= NAVBAR WITH PROFILE ================= -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm d-none" id="mainNavbar">
+        <div class="container">
+
+            <a class="navbar-brand fw-bold" href="#">
+                <i class="fa-solid fa-network-wired me-2"></i>SNC
+            </a>
+
+            <div class="ms-auto dropdown">
+
+                <a class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fa-solid fa-user-circle fs-5 me-2"></i>
+                    <strong id="loginName">Admin</strong>
+                </a>
+
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3" aria-labelledby="profileDropdown">
+                    <li class="px-3 py-2 text-muted small">
+                        <i class="fa-solid fa-user me-1"></i>
+                        Login sebagai
+                    </li>
+                    <li>
+                        <span class="dropdown-item-text fw-semibold" id="loginNameDropdown">
+                            Admin
+                        </span>
+                    </li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    <li>
+                        <button onclick="logout()" class="dropdown-item text-danger">
+                            <i class="fa-solid fa-right-from-bracket me-2"></i>
+                            Logout
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-12 col-sm-10 col-md-8 col-lg-6">
+
+                <!-- ================= LOGIN FORM ================= -->
+                <div class="card shadow border-0" id="loginCard">
+                    <div class="card-body p-4">
+
+                        <h4 class="text-center fw-bold mt-4 mb-2 text-uppercase">SNC LOGIN</h4>
+                        <p class="text-center mb-5">Please log in using your username and password!</p>
+
+                        <form id="loginForm">
+                            <div class="mb-3">
+                                <label class="form-label">Username</label>
+                                <input type="text" class="form-control" name="username" placeholder="Your Username" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Password</label>
+                                <div class="position-relative">
+                                    <input type="password" class="form-control pe-5" name="password" id="passwordInput" placeholder="Your Password" required>
+                                    <i class="fa-solid fa-eye position-absolute" id="togglePassword" style="
+                                    right:15px;
+                                    top:50%;
+                                    transform:translateY(-50%);
+                                    cursor:pointer;
+                                    color:#6c757d;">
+                                    </i>
+                                </div>
+                            </div>
+
+                            <p class="small mb-3 text-center text-muted">Lupa akun? Hubungi Admin.</p>
+
+                            <button type="submit" id="loginBtn" class="btn btn-primary w-100">
+                                Login
+                            </button>
+                        </form>
+
+                        <p class="text-center mt-5">&copy; 2026 <strong>STEKSA.NET</strong></p>
+
+                    </div>
+                </div>
+
+                <!-- ================= CUSTOMER FORM ================= -->
+                <div class="card shadow border-0 d-none" id="formCard">
+                    <div class="card-body p-4">
+
+                        <h4 class="fw-bold mb-4 text-center">Form Input Data Pelanggan</h4>
+
+                        <form id="dataForm">
+
+                            <div class="mb-3">
+                                <label class="form-label">Nama Pelanggan</label>
+                                <input type="text" class="form-control" name="nama" placeholder="Nama Pelanggan" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Nomor WhatsApp</label>
+                                <input type="number" class="form-control" name="whatsapp" placeholder="62xxx" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Area</label>
+                                <select class="form-select select2Area" name="area" required>
+                                    <option></option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Desa</label>
+                                <select class="form-select select2Desa" name="desa" required>
+                                    <option></option>
+                                    <option value="pbr">PABUARAN</option>
+                                    <option value="cwl">CIWALAT</option>
+                                    <option value="snr">SIRNASARI</option>
+                                    <option value="bts">BANTARSARI</option>
+                                    <option value="skj">SUKAJAYA</option>
+                                    <option value="cbd">CIBADAK</option>
+                                    <option value="lbs">LEMBURSAWAH</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Upload / Foto KTP</label>
+                                <input type="file" class="form-control" id="ktp" accept="image/*" capture="environment" required>
+                            </div>
+
+                            <button type="submit" id="submitBtn" class="btn btn-primary w-100">
+                                Kirim Data
+                            </button>
+
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const scriptURL = "https://script.google.com/macros/s/AKfycbzAdKHmfWDtiOF0EqwuN-FOXKRI30B49doEr9-tqe4Gqsz6Bu6tz4B6eklY3Xi4R9hIeQ/exec";
+        let token = localStorage.getItem("token");
+
+        $(document).ready(function() {
+
+            if (token) showForm();
+
+            $.getJSON('area.json', function(data) {
+                $('.select2Area').select2({
+                    placeholder: "Pilih Area",
+                    allowClear: true,
+                    data: data.results
+                });
+            });
+
+            $('.select2Desa').select2({
+                placeholder: "Pilih Desa",
+                allowClear: true
+            });
+
+        });
+
+
+        /* ================= LOGIN ================= */
+        document.getElementById("loginForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+
+            const btn = document.getElementById("loginBtn");
+            btn.disabled = true;
+            btn.innerText = "Memproses...";
+
+            Swal.fire({
+                icon: "info",
+                title: "Memverifikasi Akun",
+                text: "Silakan tunggu..",
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            const formData = new FormData(this);
+            formData.append("action", "login");
+
+            fetch(scriptURL, {
+                    method: "POST",
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(response => {
+
+                    btn.disabled = false;
+                    btn.innerText = "Login";
+
+                    if (response.status === "success") {
+                        localStorage.setItem("token", response.token);
+                        localStorage.setItem("username", formData.get("username"));
+                        token = response.token;
+                        Swal.close();
+                        showForm();
+                    } else {
+                        Swal.fire("Login Gagal", response.message, "error");
+                    }
+
+                })
+                .catch(() => {
+                    btn.disabled = false;
+                    btn.innerText = "Login";
+                    Swal.fire("Error", "Tidak bisa koneksi ke server", "error");
+                });
+        });
+
+
+        /* ================= SUBMIT DATA ================= */
+        document.getElementById("dataForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+
+            const form = e.target;
+            const btn = document.getElementById("submitBtn");
+            const file = document.getElementById("ktp").files[0];
+
+            // --- VALIDASI WHATSAPP ---
+            let wa = form.whatsapp.value.trim();
+
+            const waPattern = /^62\d{8,13}$/;
+
+            if (!waPattern.test(wa)) {
+                Swal.fire({
+                    icon: "warning",
+                    title: "Nomor WA Tidak Valid!",
+                    html: `Pastikan nomor WhatsApp:<br>
+                   • Diawali dengan <b>62</b> (bukan 08 atau +62)<br>
+                   • Hanya berisi angka<br>
+                   • Terdiri dari 10 - 15 digit`,
+                    confirmButtonColor: "#0d6efd"
+                });
+                return;
+            }
+            // --- END VALIDASI WHATSAPP ---
+
+            if (!file) {
+                Swal.fire("Error!", "Foto KTP wajib diupload!", "error");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = "Mengirim...";
+
+            Swal.fire({
+                icon: "info",
+                title: "Memproses Data",
+                html: "Silakan tunggu..",
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            const reader = new FileReader();
+
+            // Mulai proses Watermark setelah file dibaca
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    // Buat elemen Canvas
+                    const canvas = document.createElement("canvas");
+                    const ctx = canvas.getContext("2d");
+
+                    // Sesuaikan ukuran canvas dengan gambar asli
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+
+                    // Gambar foto asli ke canvas
+                    ctx.drawImage(img, 0, 0);
+
+                    // --- PENGATURAN WATERMARK ---
+                    const text = "STEKSA.NET";
+
+                    const fontSize = Math.max(canvas.width, canvas.height) * 0.02;
+                    ctx.font = `${fontSize}px Arial`;
+
+                    ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+
+                    const diag = Math.sqrt(canvas.width * canvas.width + canvas.height * canvas.height);
+
+                    const stepX = ctx.measureText(text).width * 2.5;
+                    const stepY = fontSize * 6;
+
+                    ctx.translate(canvas.width / 2, canvas.height / 2);
+                    ctx.rotate(-45 * Math.PI / 180);
+
+                    const startPos = -diag;
+                    const endPos = diag;
+
+                    for (let y = startPos; y < endPos; y += stepY) {
+                        for (let x = startPos; x < endPos; x += stepX) {
+                            ctx.fillText(text, x, y);
+                        }
+                    }
+                    // --- SELESAI PENGATURAN WATERMARK ---
+
+                    // Convert hasil canvas kembali ke Base64 (Format JPEG kualitas 80% untuk kompresi)
+                    const watermarkedBase64 = canvas.toDataURL("image/jpeg", 0.8);
+
+                    // Siapkan data untuk dikirim
+                    const formData = new FormData(form);
+                    formData.set("whatsapp", wa);
+                    formData.set("ktp", watermarkedBase64);
+                    formData.append("token", token);
+
+                    // Kirim ke Google Apps Script
+                    fetch(scriptURL, {
+                            method: "POST",
+                            body: formData
+                        })
+                        .then(res => res.json())
+                        .then(response => {
+                            btn.disabled = false;
+                            btn.innerText = "Kirim Data";
+
+                            if (response.status === "success") {
+                                Swal.fire({
+                                    icon: "success",
+                                    title: "Berhasil!",
+                                    html: `
+                                <b>Secret PPPoE:</b><br><br>
+                                <div id="secretBox" style="
+                                    background:#eef4ff;
+                                    border:2px dashed #0d6efd;
+                                    padding:12px;
+                                    border-radius:10px;
+                                    font-weight:bold;
+                                    color:#0d6efd;
+                                    word-break:break-all;
+                                    text-align:center;
+                                    margin-bottom:15px;">
+                                    ${response.secret}
+                                </div>
+                                <button id="copySecretBtn" type="button" style="
+                                    background:#0d6efd;
+                                    color:white;
+                                    border:none;
+                                    padding:10px 18px;
+                                    border-radius:6px;
+                                    cursor:pointer;">
+                                    Salin Secret
+                                </button>
+                                `,
+                                    showConfirmButton: false,
+                                    showCloseButton: true,
+                                    allowOutsideClick: false,
+                                    allowEscapeKey: false,
+                                    didOpen: () => {
+                                        const copyBtn = document.getElementById("copySecretBtn");
+                                        copyBtn.addEventListener("click", function() {
+                                            const secretText = document.getElementById("secretBox").innerText;
+                                            if (navigator.clipboard && window.isSecureContext) {
+                                                navigator.clipboard.writeText(secretText)
+                                                    .then(() => successCopy(copyBtn))
+                                                    .catch(() => fallbackCopy(secretText, copyBtn));
+                                            } else {
+                                                fallbackCopy(secretText, copyBtn);
+                                            }
+                                        });
+
+                                        function fallbackCopy(text, btn) {
+                                            const textArea = document.createElement("textarea");
+                                            textArea.value = text;
+                                            textArea.style.position = "fixed";
+                                            textArea.style.opacity = "0";
+                                            document.body.appendChild(textArea);
+                                            textArea.focus();
+                                            textArea.select();
+                                            try {
+                                                document.execCommand("copy");
+                                                successCopy(btn);
+                                            } catch (err) {
+                                                btn.innerText = "Gagal Copy";
+                                            }
+                                            document.body.removeChild(textArea);
+                                        }
+
+                                        function successCopy(btn) {
+                                            btn.innerText = "Berhasil Disalin!";
+                                            btn.style.background = "#198754";
+                                        }
+                                    }
+                                }).then(() => {
+                                    form.reset();
+                                    $('.select2Area').val(null).trigger('change');
+                                });
+                            } else {
+                                Swal.fire("Gagal!", response.message, "error");
+                            }
+                        })
+                        .catch(() => {
+                            btn.disabled = false;
+                            btn.innerText = "Kirim Data";
+                            Swal.fire("Gagal!", "Terjadi kesalahan saat mengirim data", "error");
+                        });
+
+                };
+                img.src = event.target.result;
+            };
+
+            // Baca file sebagai Data URL (Base64) untuk memicu proses di atas
+            reader.readAsDataURL(file);
+        });
+
+
+        /* ================= SHOW FORM ================= */
+        function showForm() {
+            document.getElementById("loginCard").classList.add("d-none");
+            document.getElementById("formCard").classList.remove("d-none");
+            document.getElementById("mainNavbar").classList.remove("d-none");
+
+            const username = localStorage.getItem("username") || "Admin";
+
+            document.getElementById("loginName").innerText = username;
+            document.getElementById("loginNameDropdown").innerText = username;
+        }
+
+
+        /* ================= LOGOUT ================= */
+        function logout() {
+            localStorage.removeItem("token");
+            localStorage.removeItem("username");
+            location.reload();
+        }
+
 
         /* ================= TOGGLE PASSWORD ================= */
         document.getElementById("togglePassword").addEventListener("click", function() {
