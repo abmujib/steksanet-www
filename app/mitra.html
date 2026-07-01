@@ -65,7 +65,7 @@
     </button>
 
     <div class="text-center text-xs text-gray-500 mt-5">
-        © <span id="yearFooter"></span> STEKSA.NET
+        © <span id="yearFooter"></span> JAMPANG.NET
     </div>
 </div>
 
@@ -104,16 +104,17 @@ function hitung() {
     }
 
     let totalPendapatan = pendapatan + lainnya;
-    let operasional = totalPendapatan * 0.20;
+    let operasional = totalPendapatan * 0.30;
     let laba = totalPendapatan - operasional;
     let bagi = laba / 2;
 
     let teks =
-`LAPORAN BAGI HASIL USAHA
-MITRA STEKSA.NET
+`
+*LAPORAN BAGI HASIL USAHA*
+*MITRA JAMPANG NETWORK*
 
-Nama Mitra : ${mitra}
-Periode    : ${bulan} ${tahun}
+Nama Mitra : *${mitra}*
+Periode    : *${bulan} ${tahun}*
 
 Rincian Pendapatan:
 - Pendapatan Utama   : Rp ${rupiah(pendapatan)}
@@ -121,18 +122,20 @@ Rincian Pendapatan:
 --------------------------------
 Total Pendapatan     : Rp ${rupiah(totalPendapatan)}
 
-Biaya Operasional (20%) : Rp ${rupiah(operasional)}
+Biaya Operasional (30%) : Rp ${rupiah(operasional)}
 Laba Bersih             : Rp ${rupiah(laba)}
 
 Pembagian Hasil:
 - Pemilik Usaha : Rp ${rupiah(bagi)}
 - Mitra         : Rp ${rupiah(bagi)}
 
+Biaya Operasional 30% meliputi:
+> Bandwidth, operasional teknisi dan material peralatan untuk PSB maupun maintenance/pergantian.
+
 Terima kasih atas kerja samanya.
 
 Hormat Kami,
-STEKSA.NET
-PT. SOLUSI TEKNOLOGI SANTARA
+*JAMPANG NETWORK*
 `;
 
     document.getElementById("report").innerText = teks;
