@@ -8,9 +8,29 @@
 <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-gray-100 min-h-screen flex items-center justify-center px-3">
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center px-3">
 
-<div class="w-full max-w-md bg-white rounded-xl shadow-lg p-6">
+<!-- Halaman Login Kredensial -->
+<div id="loginOverlay" class="w-full max-w-sm bg-white rounded-xl shadow-lg p-6 my-6">
+    <h2 class="text-xl font-bold text-center mb-6">
+        Masukan Kredensial
+    </h2>
+    <div id="loginAlert" class="hidden mb-4 rounded-lg px-4 py-3 text-sm bg-red-100 text-red-700 border border-red-300">
+        Sandi yang Anda masukkan salah!
+    </div>
+    <label class="block font-semibold mb-1">Kata Sandi</label>
+    <input type="password" id="passwordInput"
+        placeholder="Masukkan kata sandi..."
+        class="w-full border rounded-lg px-3 py-2 mb-4 focus:ring-2 focus:ring-green-500"
+        onkeydown="if(event.key === 'Enter') checkPassword()">
+    <button onclick="checkPassword()"
+        class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg">
+        Buka Aplikasi
+    </button>
+</div>
+
+<!-- Konten Utama (Disembunyikan secara default) -->
+<div id="mainContent" class="hidden w-full max-w-md bg-white rounded-xl shadow-lg p-6 my-6">
     <h2 class="text-xl font-bold text-center mb-6">
         Laporan Bagi Hasil WiFi
     </h2>
@@ -48,7 +68,17 @@
     </label>
     <input type="number" id="lainnya"
         placeholder="Contoh: 300000"
+        class="w-full border rounded-lg px-3 py-2 mb-4 focus:ring-2 focus:ring-green-500">
+
+    <label class="block font-semibold mb-1">Persentase Operasional</label>
+    <select id="persentase"
         class="w-full border rounded-lg px-3 py-2 mb-5 focus:ring-2 focus:ring-green-500">
+        <!-- Opsi kosong sebagai validasi -->
+        <option value="" selected disabled hidden>-- Pilih Persentase --</option>
+        <option value="0.10">10%</option>
+        <option value="0.20">20%</option>
+        <option value="0.30">30%</option>
+    </select>
 
     <button onclick="hitung()"
         class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg">
@@ -70,9 +100,29 @@
 </div>
 
 <script>
-const currentYear = new Date().getFullYear();
+// Fungsi Pengecekan Kata Sandi
+function checkPassword() {
+    const pass = document.getElementById("passwordInput").value;
+    if (pass === "2026") {
+        document.getElementById("loginOverlay").classList.add("hidden");
+        document.getElementById("mainContent").classList.remove("hidden");
+    } else {
+        const loginAlert = document.getElementById("loginAlert");
+        loginAlert.classList.remove("hidden");
+        setTimeout(() => {
+            loginAlert.classList.add("hidden");
+        }, 3000);
+    }
+}
+
+// Pengaturan waktu otomatis
+const currentDate = new Date();
+const currentYear = currentDate.getFullYear();
+const currentMonthIndex = currentDate.getMonth();
+
 document.getElementById("tahun").value = currentYear;
 document.getElementById("yearFooter").innerText = currentYear;
+document.getElementById("bulan").selectedIndex = currentMonthIndex;
 
 function rupiah(x) {
     return x.toLocaleString('id-ID');
@@ -87,7 +137,7 @@ function showAlert(message) {
 
     setTimeout(() => {
         alertBox.classList.add("hidden");
-    }, 3000);
+    }, 3500);
 }
 
 function hitung() {
@@ -97,20 +147,34 @@ function hitung() {
 
     let pendapatan = parseFloat(document.getElementById("pendapatan").value) || 0;
     let lainnya = parseFloat(document.getElementById("lainnya").value) || 0;
+    
+    // Ambil nilai persentase
+    let nilaiPersentaseRaw = document.getElementById("persentase").value;
 
-    if (!mitra || pendapatan <= 0) {
-        showAlert("Nama Mitra dan Pendapatan Utama wajib diisi");
+    // Validasi Field Kosong
+    if (!mitra) {
+        showAlert("Nama Mitra wajib diisi!");
+        return;
+    }
+    if (pendapatan <= 0) {
+        showAlert("Pendapatan Utama wajib diisi!");
+        return;
+    }
+    if (!nilaiPersentaseRaw) {
+        showAlert("Anda harus memilih Persentase Operasional terlebih dahulu!");
         return;
     }
 
+    let nilaiPersentase = parseFloat(nilaiPersentaseRaw);
+    let teksPersentase = (nilaiPersentase * 100) + "%"; 
+
     let totalPendapatan = pendapatan + lainnya;
-    let operasional = totalPendapatan * 0.30;
+    let operasional = totalPendapatan * nilaiPersentase; 
     let laba = totalPendapatan - operasional;
     let bagi = laba / 2;
 
     let teks =
-`
-*LAPORAN BAGI HASIL USAHA*
+`*LAPORAN BAGI HASIL USAHA*
 *MITRA JAMPANG NETWORK*
 
 Nama Mitra : *${mitra}*
@@ -122,21 +186,20 @@ Rincian Pendapatan:
 --------------------------------
 Total Pendapatan     : Rp ${rupiah(totalPendapatan)}
 
-Biaya Operasional (30%) : Rp ${rupiah(operasional)}
+Biaya Operasional (${teksPersentase}) : Rp ${rupiah(operasional)}
 Laba Bersih             : Rp ${rupiah(laba)}
 
 Pembagian Hasil:
 - Pemilik Usaha : Rp ${rupiah(bagi)}
 - Mitra         : Rp ${rupiah(bagi)}
 
-Biaya Operasional 30% meliputi:
-> Bandwidth, operasional teknisi dan material peralatan untuk PSB maupun maintenance/pergantian.
+Biaya Operasional ${teksPersentase} meliputi:
+> Bandwidth, operasional teknisi, dll.
 
 Terima kasih atas kerja samanya.
 
 Hormat Kami,
-*JAMPANG NETWORK*
-`;
+*JAMPANG NETWORK*`;
 
     document.getElementById("report").innerText = teks;
     document.getElementById("report").classList.remove("hidden");
